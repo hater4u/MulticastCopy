@@ -24,7 +24,7 @@ public class Client extends Thread{
                 socketAddress = new InetSocketAddress(address, port);
                 socket.joinGroup(socketAddress, NetworkInterface.getByInetAddress(address));
             } else {
-                System.out.println("Fuck you");
+                System.out.println("Argument is not multicast address");
             }
         } catch (SocketException e) {
             System.out.println("Some error: " + e);
