@@ -31,7 +31,6 @@ public class Client extends Thread{
         } catch (IOException e) {
             System.out.println("Can't open socket: " + e);
         }
-
     }
 
     public void work(String msg) {
