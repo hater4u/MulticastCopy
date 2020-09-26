@@ -9,11 +9,12 @@ public class Main {
         Client client = new Client(args[0]);
         while (true) {
             client.work();
-            if(System.in.available() != -1) {
-                Scanner scanner = new Scanner(System.in);
-                String s = scanner.nextLine();
-                if(s.equals("stop")) break;
-            }
+//            if(System.in.available() != -1) {
+//                Scanner scanner = new Scanner(System.in);
+//                String s = scanner.nextLine();
+//                if(s.equals("stop")) break;
+//            }
+            if (false) break;
         }
         client.close();
     }
