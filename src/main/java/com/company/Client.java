@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Client extends Thread{
-    // private DatagramSocket socket;
     private InetAddress address;
     private MulticastSocket socket;
     private SocketAddress socketAddress;
-    private Map<SocketAddress, Long> copiesMap = new HashMap<>();
+    private Map<UUID, Long> copiesMap = new HashMap<>();
+    private UUID uuid = UUID.randomUUID();
 
     private byte[] buf = new byte[512];
 
@@ -33,7 +34,7 @@ public class Client extends Thread{
         }
     }
 
-    public void work(String msg) {
+    public void work() {
         long startTimeout = System.currentTimeMillis();
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         while (System.currentTimeMillis() - startTimeout < 1000) {
@@ -43,24 +44,24 @@ public class Client extends Thread{
             } catch (IOException e) {
 //                System.out.println("error :" + e);
             }
-            String received = new String(packet.getData(), 0, packet.getLength());
             if (packet.getAddress() != null) {
-                SocketAddress item = new InetSocketAddress(packet.getAddress(), packet.getPort());
-                if (copiesMap.containsKey(item)) {
-                    copiesMap.replace(item, System.currentTimeMillis());
+                UUID receivedUuid = UUID.fromString(new String(packet.getData(), 0, packet.getLength()));
+                if (copiesMap.containsKey(receivedUuid)) {
+                    copiesMap.replace(receivedUuid, System.currentTimeMillis());
                 } else {
-                    copiesMap.put(item, System.currentTimeMillis());
-                    System.out.println(copiesMap.toString());
+                    copiesMap.put(receivedUuid, System.currentTimeMillis());
+                    System.out.println(packet.getAddress());
                 }
             }
-            for (Map.Entry<SocketAddress, Long> entry: copiesMap.entrySet()) {
-                if (System.currentTimeMillis() - entry.getValue() > 15000) {
+            for (Map.Entry<UUID, Long> entry: copiesMap.entrySet()) {
+                if (System.currentTimeMillis() - entry.getValue() > 5000) {
                     copiesMap.remove(entry.getKey());
-                    System.out.println(copiesMap.toString());
+                    System.out.println(packet.getAddress());
                 }
             }
         }
-        buf = msg.getBytes();
+        buf = uuid.toString().getBytes();
+
         packet = new DatagramPacket(buf, buf.length, socketAddress);
         try {
             socket.send(packet);
