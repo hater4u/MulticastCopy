@@ -5,12 +5,13 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Client extends Thread{
     private InetAddress address;
     private MulticastSocket socket;
     private SocketAddress socketAddress;
-    private Map<UUID, Long> copiesMap = new HashMap<>();
+    private Map<Node, Long> copiesMap = new ConcurrentHashMap<>(); //HashMap<>();
     private UUID uuid = UUID.randomUUID();
 
     private byte[] buf = new byte[512];
@@ -36,6 +37,7 @@ public class Client extends Thread{
 
     public void work() {
         long startTimeout = System.currentTimeMillis();
+        boolean flag;
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         while (System.currentTimeMillis() - startTimeout < 1000) {
             packet = new DatagramPacket(buf, buf.length);
@@ -46,18 +48,30 @@ public class Client extends Thread{
             }
             if (packet.getAddress() != null) {
                 UUID receivedUuid = UUID.fromString(new String(packet.getData(), 0, packet.getLength()));
-                if (copiesMap.containsKey(receivedUuid)) {
-                    copiesMap.replace(receivedUuid, System.currentTimeMillis());
+                InetSocketAddress receivedAddress = new InetSocketAddress(packet.getAddress(), packet.getPort());
+                Node node = new Node(receivedUuid, receivedAddress);
+                if (copiesMap.containsKey(node)) {
+                    copiesMap.replace(node, System.currentTimeMillis());
                 } else {
-                    copiesMap.put(receivedUuid, System.currentTimeMillis());
-                    System.out.println(packet.getAddress());
+                    copiesMap.put(node, System.currentTimeMillis());
+                    for (Map.Entry<Node, Long> entry: copiesMap.entrySet()) {
+                        System.out.print(entry.getKey().getNodeAddress() + ", ");
+                    }
+                    System.out.println();
                 }
             }
-            for (Map.Entry<UUID, Long> entry: copiesMap.entrySet()) {
+            flag = false;
+            for (Map.Entry<Node, Long> entry: copiesMap.entrySet()) {
                 if (System.currentTimeMillis() - entry.getValue() > 5000) {
                     copiesMap.remove(entry.getKey());
-                    System.out.println(packet.getAddress());
+                    flag = true;
                 }
+            }
+            if (flag) {
+                for (Map.Entry<Node, Long> entry: copiesMap.entrySet()) {
+                    System.out.print(entry.getKey().getNodeAddress()  + ", ");
+                }
+                System.out.println();
             }
         }
         buf = uuid.toString().getBytes();
