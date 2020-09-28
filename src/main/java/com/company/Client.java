@@ -20,6 +20,10 @@ public class Client extends Thread{
         int port = 4445;
         try {
             socket = new MulticastSocket(port);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        try {
             socket.setSoTimeout(1000);
             address = InetAddress.getByName(addr);
             if (address.isMulticastAddress()) {
@@ -28,10 +32,9 @@ public class Client extends Thread{
             } else {
                 System.out.println("Argument is not multicast address");
             }
-        } catch (SocketException e) {
-            System.out.println("Some error: " + e);
         } catch (IOException e) {
-            System.out.println("Can't open socket: " + e);
+            System.out.println(e.getMessage());
+            socket.close();
         }
     }
 
